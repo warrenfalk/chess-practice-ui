@@ -1,0 +1,18 @@
+{
+  "name": "chess-practice-ui",
+  "scripts": {
+    "clean": "rimraf .cache dist/ distweb/",
+    "start": "ts-node --project fuse/tsconfig.json fuse/fuse.ts"
+  },
+  "devDependencies": {
+    "@yarnpkg/pnpify": "^2.3.3",
+    "rimraf": "^3.0.2",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.1.2"
+  },
+  "dependencies": {
+    "@types/node": "^14.14.10",
+    "fuse-box": "next",
+    "tslib": "^2.0.3"
+  }
+}
