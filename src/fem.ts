@@ -1,10 +1,10 @@
-import { GameState, SquareState, SquareStatePattern } from "./GameState";
+import { GameState, SquareState, SquarePiecePattern } from "./GameState";
 
 function parseRowFem(rowFem: string): SquareState[] {
     const row = rowFem.replace(/[1-8]+/g, n => " ".repeat(parseInt(n))).split("");
     if (row.length !== 8)
         throw new Error(`row "${rowFem}" has ${row.length} squares`);
-    const bad = row.find(s => !SquareStatePattern.test(s));
+    const bad = row.find(s => !SquarePiecePattern.test(s));
     if (bad !== undefined)
         throw new Error(`row "${rowFem}" has invalid piece ${bad}`);
     return row as SquareState[];
