@@ -467,6 +467,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"assert-never@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "assert-never@npm:1.2.1"
+  checksum: 8e4a8a8e196ee030b3013ac03bdb00f573eda71f9caab507cd89547495b3cc256cd01560799d7b59023d1ec2dce26a6b3bece662a59c525c90ab2e21be361792
+  languageName: node
+  linkType: hard
+
 "assert-plus@npm:1.0.0, assert-plus@npm:^1.0.0":
   version: 1.0.0
   resolution: "assert-plus@npm:1.0.0"
@@ -695,6 +702,7 @@ __metadata:
     "@types/react": ^17.0.0
     "@types/react-dom": ^17.0.0
     "@yarnpkg/pnpify": ^2.3.3
+    assert-never: ^1.2.1
     fuse-box: next
     react: ^17.0.1
     react-dom: ^17.0.1
