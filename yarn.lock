@@ -704,6 +704,7 @@ __metadata:
     "@yarnpkg/pnpify": ^2.3.3
     assert-never: ^1.2.1
     fuse-box: next
+    immer: ^8.0.0
     react: ^17.0.1
     react-dom: ^17.0.1
     rimraf: ^3.0.2
@@ -1646,6 +1647,13 @@ fsevents@~2.1.2:
   version: 5.1.8
   resolution: "ignore@npm:5.1.8"
   checksum: b08e3d5b5d94eca13475f29a5d47d221060e9cdd7e38d7647088e29d90130669a970fecbc4cdb41b8fa295c6673740c729d3dc05dadc381f593efb42282cbf9f
+  languageName: node
+  linkType: hard
+
+"immer@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "immer@npm:8.0.0"
+  checksum: 99ef306c811902c31554ef2d5c22b8e59c2047761bf307c28559f6ec74b0ff8dfaa934c29d6704f1087514ff9e278c782731a1c21e8171d568a1124f57f7b192
   languageName: node
   linkType: hard
 

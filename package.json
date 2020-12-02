@@ -16,6 +16,7 @@
     "@types/react-dom": "^17.0.0",
     "assert-never": "^1.2.1",
     "fuse-box": "next",
+    "immer": "^8.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "tslib": "^2.0.3"

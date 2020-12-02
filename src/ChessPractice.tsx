@@ -1,13 +1,13 @@
 import React, { useReducer} from 'react';
-import { Board, BoardEvent, SquareRef } from './Board';
+import { Board, BoardEvent, SquareRef, toSquareNumber } from './Board';
 import { parseFem } from './fem';
 import { SquareState } from './GameState';
-
+import produce from "immer";
 
 type AppState = {
-    readonly population: readonly SquareState[],
-    readonly highlighted: readonly SquareRef[],
-    readonly valid: readonly SquareRef[],
+    population: SquareState[],
+    highlighted: SquareRef[],
+    valid: SquareRef[],
 }
 
 type AppEvent = {from: "board", boardEvent: BoardEvent};
@@ -18,13 +18,15 @@ const defaultState: AppState = {
     valid: ["e3", "e4", "e5", "e6"],
 }
 
-function appReduce(state: AppState, action: AppEvent): AppState {
-    switch (action.from) {
-        case "board":
-            break;
+const appReduce = produce((state: AppState, action: AppEvent) => {
+    if (action.from === "board" && action.boardEvent.event === "movePiece") {
+        const {boardEvent} = action;
+        const from = toSquareNumber(boardEvent.origin)
+        const to = toSquareNumber(boardEvent.destination)
+        state.population[to] = state.population[from];
+        state.population[from] = " ";
     }
-    return state;
-}
+});
 
 export const ChessPractice: React.FC = ({}) => {
     const [state, dispatch] = useReducer(appReduce, defaultState);
