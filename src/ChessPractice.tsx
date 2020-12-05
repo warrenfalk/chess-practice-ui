@@ -1,6 +1,6 @@
 import React, { useEffect, useReducer} from 'react';
 import { Board, BoardEvent, SquareFocus } from './Board';
-import { parseFem } from './fem';
+import { parseFen as parseFen } from './fen';
 import { SquareCoord, SquareRef, SquareState, square, pieceType, isWhite, CastleState, BoardState, PieceCode, directionOf, rankOf, Color } from './GameState';
 import produce from "immer";
 
@@ -13,7 +13,7 @@ type AppState = {
 type AppEvent = {from: "board", boardEvent: BoardEvent};
 
 const defaultState: AppState = {
-    board: parseFem("rnbqkbnr/p3pppp/1p6/2ppP3/8/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 4"),
+    board: parseFen("rnbqkbnr/p3pppp/1p6/2ppP3/8/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 4"),
     highlighted: [],
 }
 
