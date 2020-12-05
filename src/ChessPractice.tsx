@@ -1,7 +1,7 @@
-import React, { useReducer} from 'react';
+import React, { useEffect, useReducer} from 'react';
 import { Board, BoardEvent, SquareFocus } from './Board';
 import { parseFem } from './fem';
-import { SquareCoord, SquareRef, SquareState, square, pieceType, isWhite, CastleState, BoardState } from './GameState';
+import { SquareCoord, SquareRef, SquareState, square, pieceType, isWhite, CastleState, BoardState, PieceCode, directionOf, rankOf, Color } from './GameState';
 import produce from "immer";
 
 type AppState = {
@@ -13,7 +13,7 @@ type AppState = {
 type AppEvent = {from: "board", boardEvent: BoardEvent};
 
 const defaultState: AppState = {
-    board: parseFem("rnbqkbnr/pppp1ppp/4p3/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
+    board: parseFem("rnbqkbnr/p3pppp/1p6/2ppP3/8/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 4"),
     highlighted: [],
 }
 
@@ -62,9 +62,21 @@ const movePiece = produce((board: BoardState, move: {to: SquareRef, from: Square
         board.castle = board.castle.replace(/q/g, "");
     if (piece === "r" && square(move.from).equals("h8"))
         board.castle = board.castle.replace(/k/g, "");
-    throw new Error("Check for enpassant");
+    const direction = directionOf(piece);
+    // remove captured piece if this was en passant
+    if (board.enPassant !== undefined && square(move.to).equals(board.enPassant))
+        population[next(square(board.enPassant).pos(), 0, -direction)!] = " ";
+    // enable en passant for next move if necessary
+    if ((piece === "p" || piece === "P") && rankOf(move.from, direction) === 1 && rankOf(move.to, direction) === 3)
+        board.enPassant = next(from, 0, direction);
+    else
+        board.enPassant = undefined;
     population[to] = piece;
     population[from] = " ";
+    if (board.toMove === 1)
+        board.toMove = -1;
+    else if (board.toMove === -1)
+        board.toMove = 1;
 })
 
 function next(pos: number, h: number, v: number): number | undefined {
@@ -89,40 +101,40 @@ function* lines(pos: number | undefined, pop: readonly SquareState[], isEnemy: (
         yield* line(pos, h, v, pop, isEnemy);
     }
 }
-function color(pop: SquareState) {
-    return pop === " " ? 0 : isWhite(pop) ? 1 : -1;
-}
 
 const orthogonal: [number, number][] = [[0,1], [0,-1], [1,0], [-1,0]];
 const diagonal: [number, number][] = [[1,1], [-1,-1], [-1,1], [1,-1]];
 const knight: [number, number][] = [[-2,-1], [-2,1], [-1,2], [1,2], [2,1], [2,-1], [1,-2], [-1,-2]]
 
-function* getValidMoves(pop: readonly SquareState[], castle: CastleState, sqr: SquareRef): Generator<number> {
+function* getValidMoves(sqr: SquareRef, pop: readonly SquareState[], castle: CastleState, toMove: Color | undefined, ep: SquareRef | undefined): Generator<number> {
     const sq = square(sqr).pos();
     const piece = pop[sq];
     if (piece === " ")
         return;
     const pt = pieceType(piece);
-    const forward = color(piece);
-    const isEnemy = (p: SquareState) => p != " " && color(p) !== forward
+    const direction = directionOf(piece);
+    if (toMove !== undefined && direction !== toMove)
+        return; // it isn't this side's turn
+    const isEnemy = (p: SquareState) => p != " " && directionOf(p) !== direction
     switch (pt) {
         case "p": {
-            const f1 = next(sq, 0, forward);
+            const f1 = next(sq, 0, direction);
             if (f1 && pop[f1] === " ") {
                 yield f1;
-                const rank = Math.abs(square(sq).cr.r + ((forward == 1) ? -7 : 0));
+                const rank = rankOf(sq, direction);
                 console.log(rank)
+                // a pawn on rank 2 can move to rank 4
                 if (rank === 1) {
-                    const f2 = next(f1, 0, forward);
+                    const f2 = next(f1, 0, direction);
                     if (f2 && pop[f2] === " ")
                         yield f2;
                 }
             }
-            const ul = next(sq, -1, forward);
-            if (ul && isEnemy(pop[ul]))
+            const ul = next(sq, -1, direction);
+            if (ul && (isEnemy(pop[ul]) || ep && square(ep).equals(ul)))
                 yield ul;
-            const ur = next(sq, 1, forward);
-            if (ur && isEnemy(pop[ur]))
+            const ur = next(sq, 1, direction);
+            if (ur && (isEnemy(pop[ur]) || ep && square(ep).equals(ur)))
                 yield ur;
             return;
         }
@@ -193,7 +205,7 @@ const appReduce = produce((state: AppState, action: AppEvent) => {
             }
             case "focusSquare": {
                 const {board} = state;
-                const valid = Array.from(getValidMoves(board.population, board.castle, boardEvent.square));
+                const valid = Array.from(getValidMoves(boardEvent.square, board.population, board.castle, board.toMove, board.enPassant));
                 state.focus = {origin: boardEvent.square, valid};
                 return;
             }
@@ -216,6 +228,9 @@ const appReduce = produce((state: AppState, action: AppEvent) => {
 export const ChessPractice: React.FC = ({}) => {
     const [state, dispatch] = useReducer(appReduce, defaultState);
     const {board, focus, highlighted} = state;
+    useEffect(() => {
+        console.log({board: {...board}})
+    }, [board])
     return (
         <div>
             <Board

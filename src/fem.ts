@@ -1,4 +1,4 @@
-import { BoardState, SquareState, SquarePiecePattern, CastleState } from "./GameState";
+import { BoardState, SquareState, SquarePiecePattern, CastleState, Color, square, SquareRef } from "./GameState";
 
 function parseRowFem(rowFem: string): SquareState[] {
     const row = rowFem.replace(/[1-8]+/g, n => " ".repeat(parseInt(n))).split("");
@@ -21,10 +21,22 @@ function parseCastleState(castlesFem: string): CastleState {
     return castlesFem;
 }
 
+function parseToMoveFem(toMoveFem: string): Color {
+    return toMoveFem === "w" ? 1 : toMoveFem === "b" ? -1 : 0;
+}
+
+function parseEnPassantFem(enPassantFem: string): SquareRef | undefined {
+    if (enPassantFem === "-")
+        return undefined;
+    return square(enPassantFem);
+}
+
 export function parseFem(fem: string): BoardState {
     const [boardFem, toMoveFem, castlesFem, enPassantFem, halfMoveClockFem, fullMoveCountFem] = fem.split(/ +/);
     const population = parseBoardFem(boardFem);
     const castle = parseCastleState(castlesFem);
-    return {population, castle}
+    const enPassant = parseEnPassantFem(enPassantFem);
+    const toMove = parseToMoveFem(toMoveFem);
+    return {population, castle, toMove, enPassant}
 }
 

@@ -9,6 +9,21 @@ export const SquarePiecePattern = /[prnbqkPRNBQK ]/
 export const PieceTypeCodes: readonly PieceTypeCode[] = ["p", "r", "n", "b", "q", "k"]
 export const PieceCodes: readonly PieceCode[] = [...PieceTypeCodes, ...PieceTypeCodes.map(ptc => ptc.toUpperCase())] as readonly PieceCode[]
 
+export type Direction = -1 | 1;
+export type Color = Direction | 0;
+
+export function directionOf(piece: PieceCode): Direction {
+    return isWhite(piece) ? 1 : -1;
+}
+
+export function colorOf(pop: SquareState): Color {
+    return pop === " " ? 0 : directionOf(pop);
+}
+
+export function rankOf(sq: SquareRef, direction: Direction) {
+    return Math.abs(square(sq).cr.r + ((direction == 1) ? -7 : 0))
+}
+
 export type SquareCoord = {
     // Zero-based index of column (file) 0 -> "a file", 7 -> "h file"
     readonly c: number,
@@ -80,7 +95,9 @@ export type CastleState = string;
 
 export type BoardState = {
     population: SquareState[],
-    castle: CastleState
+    castle: CastleState,
+    enPassant: SquareRef | undefined,
+    toMove: Color,
 }
 
 export function pieceType(piece: PieceCode) {
