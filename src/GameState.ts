@@ -78,7 +78,7 @@ export function square(sq: SquareRef): SquareInfo {
 
 export type CastleState = string;
 
-export type GameState = {
+export type BoardState = {
     population: SquareState[],
     castle: CastleState
 }

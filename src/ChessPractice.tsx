@@ -1,12 +1,11 @@
 import React, { useReducer} from 'react';
 import { Board, BoardEvent, SquareFocus } from './Board';
 import { parseFem } from './fem';
-import { SquareCoord, SquareRef, SquareState, square, pieceType, isWhite, CastleState } from './GameState';
+import { SquareCoord, SquareRef, SquareState, square, pieceType, isWhite, CastleState, BoardState } from './GameState';
 import produce from "immer";
 
 type AppState = {
-    population: SquareState[],
-    castle: CastleState,
+    board: BoardState,
     focus?: SquareFocus,
     highlighted: SquareRef[],
 }
@@ -14,11 +13,12 @@ type AppState = {
 type AppEvent = {from: "board", boardEvent: BoardEvent};
 
 const defaultState: AppState = {
-    ...parseFem("rnbqkbnr/pppp1ppp/4p3/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
+    board: parseFem("rnbqkbnr/pppp1ppp/4p3/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
     highlighted: [],
 }
 
-const movePiece = produce((population: SquareState[], move: {to: SquareRef, from: SquareRef}) => {
+const movePiece = produce((board: BoardState, move: {to: SquareRef, from: SquareRef}) => {
+    const {population} = board;
     const from = square(move.from).pos()
     const to = square(move.to).pos()
     const pop = population[from];
@@ -50,6 +50,19 @@ const movePiece = produce((population: SquareState[], move: {to: SquareRef, from
             population[square("f1").pos()] = "R";
         }
     }
+    if (piece === "K")
+        board.castle = board.castle.replace(/[KQ]/g, "");
+    if (piece === "k")
+        board.castle = board.castle.replace(/[kq]/g, "");
+    if (piece === "R" && square(move.from).equals("a1"))
+        board.castle = board.castle.replace(/Q/g, "");
+    if (piece === "R" && square(move.from).equals("h1"))
+        board.castle = board.castle.replace(/K/g, "");
+    if (piece === "r" && square(move.from).equals("a8"))
+        board.castle = board.castle.replace(/q/g, "");
+    if (piece === "r" && square(move.from).equals("h8"))
+        board.castle = board.castle.replace(/k/g, "");
+    throw new Error("Check for enpassant");
     population[to] = piece;
     population[from] = " ";
 })
@@ -174,12 +187,13 @@ const appReduce = produce((state: AppState, action: AppEvent) => {
         const {boardEvent} = action;
         switch (boardEvent.event) {
             case "movePiece": {
-                state.population = movePiece(state.population, {to: boardEvent.destination, from: boardEvent.origin});
+                state.board = movePiece(state.board, {to: boardEvent.destination, from: boardEvent.origin});
                 delete state.focus;
                 return;
             }
             case "focusSquare": {
-                const valid = Array.from(getValidMoves(state.population, state.castle, boardEvent.square));
+                const {board} = state;
+                const valid = Array.from(getValidMoves(board.population, board.castle, boardEvent.square));
                 state.focus = {origin: boardEvent.square, valid};
                 return;
             }
@@ -191,7 +205,7 @@ const appReduce = produce((state: AppState, action: AppEvent) => {
                 const {focus} = state;
                 if (focus && !square(focus.origin).equals(boardEvent.square)) {
                     const to = boardEvent.square;
-                    state.population = movePiece(state.population, {to, from: focus.origin});
+                    state.board = movePiece(state.board, {to, from: focus.origin});
                     delete state.focus;
                 }
             }
@@ -201,11 +215,11 @@ const appReduce = produce((state: AppState, action: AppEvent) => {
 
 export const ChessPractice: React.FC = ({}) => {
     const [state, dispatch] = useReducer(appReduce, defaultState);
-    const {population, focus, highlighted} = state;
+    const {board, focus, highlighted} = state;
     return (
         <div>
             <Board
-                population={population}
+                population={board.population}
                 focus={focus}
                 highlighted={highlighted}
                 onEvent={(e) => {
