@@ -1,10 +1,8 @@
+import { type } from "os";
 import React from "react";
 import { useState } from "react";
-import { isWhite, PieceCode, PieceCodes, pieceName, pieceType, SquareState } from "./GameState";
+import { isWhite, PieceCode, PieceCodes, pieceName, pieceType, square, SquareCoord, SquareInfo, SquareRef, SquareState } from "./GameState";
 import { PieceShape, shapeOfPiece } from "./PieceShape";
-
-const rows = ["1", "2", "3", "4", "5", "6", "7", "8"]
-const cols = ["a", "b", "c", "d", "e", "f", "g", "h"]
 
 const PieceDef: React.FC<{piece: PieceCode}> = ({piece}) => {
     return (
@@ -14,70 +12,24 @@ const PieceDef: React.FC<{piece: PieceCode}> = ({piece}) => {
     )
 }
 
-export type SquareCoord = {
-    // Zero-based index of column (file) 0 -> "a file", 7 -> "h file"
-    readonly c: number,
-    // Zero-based index of row 0 -> "row 1", 7 -> "row 8"
-    readonly r: number,
-};
-export type SquareRef = number | SquareCoord | string;
-
-
-function toSquareCoord(squareRef: SquareRef): SquareCoord {
-    if (typeof squareRef === "number") {
-        if (squareRef < 0 || squareRef > 63)
-            throw new Error(`Square number ${squareRef} is out of range`);
-        return {c: squareRef % 8, r: Math.floor(squareRef / 8)};
-    }
-    else if (typeof squareRef === "string") {
-        if (squareRef.length < 2)
-            throw new Error(`Squaqre ref ${squareRef} is too short`);
-        const col = squareRef[0].toLowerCase();
-        const row = squareRef[1];
-        if (col < "a" || col > "h")
-            throw new Error(`Square ref ${squareRef} column ${col} is invalid`);
-        if (row < "1" || row > "8")
-            throw new Error(`Square ref ${squareRef} row ${row} is invalid`);
-        return {c: col.charCodeAt(0) - "a".charCodeAt(0), r: 8 - parseInt(row)}
-    }
-    const {c, r} = squareRef;
-    if (c < 0 || c > 7)
-        throw new Error(`Column ${c} is out of range`);
-    if (r < 0 || r > 7)
-        throw new Error(`Row ${r} is out of range`);
-    return squareRef;
+export type SquareFocus = {
+    readonly origin: SquareRef,
+    readonly valid: readonly SquareRef[],
 }
 
-export function toSquareNumber(squareCoord: SquareCoord) {
-    const {c, r} = squareCoord;
-    return c + r * 8;
-}
 
-function toSquareName(squareCoord: SquareCoord) {
-    return `${cols[squareCoord.c]}${rows[squareCoord.r]}`
-}
 
-function isLightSquare(square: SquareRef): boolean {
-    const {c, r} = toSquareCoord(square);
-    return ((c + r) % 2) === 0;
-}
-
-function areSameSquare(sq1: SquareRef, sq2: SquareRef): boolean {
-    const sc1 = toSquareCoord(sq1);
-    const sc2 = toSquareCoord(sq2);
-    return sc1.c == sc2.c && sc1.r == sc2.r;
-}
-
-function populated(square: {piece: SquareState, sq: SquareCoord}): square is {piece: PieceCode, sq: SquareCoord} {
+function populated(square: {piece: SquareState, sq: SquareInfo}): square is {piece: PieceCode, sq: SquareInfo} {
     return square.piece !== " ";
 }
 
-function boardPointToSquareCoord(boardPoint: Point): SquareCoord {
-    return {c: Math.floor(boardPoint.x), r: Math.floor(boardPoint.y)}
+function pointToSquare(boardPoint: Point): SquareInfo {
+    return square({c: Math.floor(boardPoint.x), r: Math.floor(boardPoint.y)})
 }
 
-function isNotGrabbed(grabState: GrabState, sq: SquareCoord) {
-    return !(grabState !== undefined && areSameSquare(sq, grabState.origin));
+function isNotGrabbed(grabState: GrabState, sqref: SquareRef) {
+    const sq = square(sqref);
+    return !(grabState !== undefined && sq.equals(grabState.origin));
 }
 
 function hollowCirclePath(r: number, w: number): string {
@@ -100,26 +52,25 @@ function toSvgSpace(e: SVGElement, pt: {clientX: number, clientY: number}): Poin
 }
 
 type Point = {x: number, y: number}
-type GrabState = undefined | {origin: SquareCoord, piece: PieceCode, hover: Point, hadFocus: boolean}
-type FocusState = undefined | SquareCoord
+type GrabState = undefined | {origin: SquareInfo, piece: PieceCode, hover: Point, hadFocus: boolean}
+type FocusState = undefined | SquareInfo
 
 export type BoardEvent
-    = {event: "movePiece", origin: SquareCoord, destination: SquareCoord, piece: PieceCode}
-    | {event: "grabPiece", origin: SquareCoord, piece: PieceCode}
-    | {event: "focusSquare", square: SquareCoord}
+    = {event: "movePiece", origin: SquareInfo, destination: SquareInfo, piece: PieceCode}
+    | {event: "grabPiece", origin: SquareInfo, piece: PieceCode}
+    | {event: "focusSquare", square: SquareInfo}
     | {event: "unfocus"}
     // warning: this event actually happens on mouse down on an empty square or mouse up if dropping on original square
-    | {event: "clickSquare", square: SquareCoord}
+    | {event: "clickSquare", square: SquareInfo}
 
 type BoardProps = {
     readonly population: readonly SquareState[],
+    readonly focus?: SquareFocus,
     readonly highlighted: readonly SquareRef[],
-    readonly valid: readonly SquareRef[],
     readonly onEvent: (e: BoardEvent) => void,
 }
-export const Board: React.FC<BoardProps> = ({population, highlighted, valid, onEvent: dispatch}) => {
+export const Board: React.FC<BoardProps> = ({population, focus, highlighted, onEvent: dispatch}) => {
     const [grabState, setGrabState] = useState<GrabState>(undefined);
-    const [focusState, setFocusState] = useState<FocusState>(undefined);
     return (
         <svg
             style={{width: 512, height: 512}}
@@ -170,10 +121,9 @@ export const Board: React.FC<BoardProps> = ({population, highlighted, valid, onE
                     // mouse down in board space
                     // get event coordinates in board space (floating point, unit = square)
                     const boardPoint = toSvgSpace(e.currentTarget, e);
-                    const sq = boardPointToSquareCoord(boardPoint);
-                    const sqn = toSquareNumber(sq);
+                    const sq = pointToSquare(boardPoint);
                     // get the piece, if any, which is populating that square
-                    const piece = population[sqn];
+                    const piece = population[sq.pos()];
                     if (piece === " ") {
                         // no piece is there, so register as a click
                         dispatch({
@@ -189,14 +139,13 @@ export const Board: React.FC<BoardProps> = ({population, highlighted, valid, onE
                         origin,
                         piece
                     })
-                    const hadFocus = focusState && areSameSquare(focusState, sq) || false;
+                    const hadFocus = focus && sq.equals(focus.origin) || false;
                     setGrabState({piece, origin, hover: boardPoint, hadFocus})
-                    if (!focusState || !areSameSquare(sq, focusState)) {
+                    if (!focus || !sq.equals(focus.origin)) {
                         dispatch({
                             event: "focusSquare",
                             square: sq,
                         })
-                        setFocusState(sq)
                     }
                 }}
                 onMouseMove={(e) => {
@@ -210,11 +159,10 @@ export const Board: React.FC<BoardProps> = ({population, highlighted, valid, onE
                     if (grabState) {
                         // get event coordinates in board space (floating point, unit = square)
                         const boardPoint = toSvgSpace(e.currentTarget, e);
-                        const sq = boardPointToSquareCoord(boardPoint);
-                        if (areSameSquare(sq, grabState.origin)) {
+                        const sq = pointToSquare(boardPoint);
+                        if (sq.equals(grabState.origin)) {
                             if (grabState.hadFocus) {
                                 dispatch({event: "unfocus"})
-                                setFocusState(undefined);
                             }
                             dispatch({
                                 event: "clickSquare",
@@ -234,59 +182,56 @@ export const Board: React.FC<BoardProps> = ({population, highlighted, valid, onE
                     }
                 }}>
                 {/* Squares */}
-                {rows
-                    .map((row, r) => cols.map((col, c) => ({col, row, c, r})))
+                {SquareInfo.rows
+                    .map((row, r) => SquareInfo.cols.map((col, c) => square({c, r})))
                     .flat()
                     .map((sq) => (
                         <use
-                            key={`${sq.c}${sq.r}`}
-                            href={(isLightSquare(sq) ? "#lightSquare" : "#darkSquare")}
-                            x={sq.c}
-                            y={sq.r}
+                            key={`${sq}`}
+                            href={(sq.light() ? "#lightSquare" : "#darkSquare")}
+                            {...sq.xy()}
                         />
                     ))
                 }
                 {/* Highlights */}
                 {highlighted
-                    .map(toSquareCoord)
+                    .map(square)
                     .map(sq => (
                         <use
-                            key={`h${sq.c}${sq.r}`}
+                            key={`h${sq}`}
                             href="#highlightSquare"
-                            x={sq.c}
-                            y={sq.r}
+                            {...sq.xy()}
                         />
                     ))}
                 {/* Focus */}
-                {focusState && (
+                {focus && (
                     <use
                         href="#focusSquare"
-                        x={focusState.c}
-                        y={focusState.r}
+                        {...square(focus.origin).xy()}
                     />
                 )}
                 {/* Valid */}
-                {valid
-                    .map(toSquareCoord)
-                    .map(sq => ({sq, piece: population[toSquareNumber(sq)]}))
+                {focus?.valid
+                    .map(square)
+                    .map(sq => ({sq, piece: population[sq.pos()]}))
                     .map(({sq, piece}) => (
                         <use
-                            key={`v${sq.c}${sq.r}`}
-                            transform={`translate(${sq.c + 0.5},${sq.r + 0.5})`}
+                            key={`v${sq}`}
+                            transform={`translate(${sq.cr.c + 0.5},${sq.cr.r + 0.5})`}
                             href={piece === " " ? "#validMove" : "#validCapture"}
                         />
                     ))}
                 {/* Pieces */}
                 {population
-                    .map((piece, square) => ({piece, sq: toSquareCoord(square)}))
+                    .map((piece, sq) => ({piece, sq: square(sq)}))
                     .filter(populated)
                     .filter(({sq}) => isNotGrabbed(grabState, sq))
                     .map(({piece, sq}) => (
                         <use
-                            key={`${toSquareName(sq)}`}
+                            key={`${sq}`}
                             pointerEvents="none"
                             href={`#${pieceName(piece)}`}
-                            transform={`translate(${sq.c},${sq.r})`}
+                            transform={`translate(${sq.cr.c},${sq.cr.r})`}
                         />
                     ))
                 }

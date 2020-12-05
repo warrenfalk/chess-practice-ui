@@ -1,4 +1,4 @@
-import { GameState, SquareState, SquarePiecePattern } from "./GameState";
+import { GameState, SquareState, SquarePiecePattern, CastleState } from "./GameState";
 
 function parseRowFem(rowFem: string): SquareState[] {
     const row = rowFem.replace(/[1-8]+/g, n => " ".repeat(parseInt(n))).split("");
@@ -17,9 +17,14 @@ function parseBoardFem(boardFem: string): SquareState[] {
     return rows.flat();
 }
 
+function parseCastleState(castlesFem: string): CastleState {
+    return castlesFem;
+}
+
 export function parseFem(fem: string): GameState {
     const [boardFem, toMoveFem, castlesFem, enPassantFem, halfMoveClockFem, fullMoveCountFem] = fem.split(/ +/);
-    const squares = parseBoardFem(boardFem);
-    return {squares}
+    const population = parseBoardFem(boardFem);
+    const castle = parseCastleState(castlesFem);
+    return {population, castle}
 }
 
