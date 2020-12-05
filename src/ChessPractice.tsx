@@ -113,14 +113,15 @@ const orthogonal: [number, number][] = [[0,1], [0,-1], [1,0], [-1,0]];
 const diagonal: [number, number][] = [[1,1], [-1,-1], [-1,1], [1,-1]];
 const knight: [number, number][] = [[-2,-1], [-2,1], [-1,2], [1,2], [2,1], [2,-1], [1,-2], [-1,-2]]
 
-function* getValidMoves(sqr: SquareRef, pop: readonly SquareState[], castle: CastleState, toMove: Color | undefined, ep: SquareRef | undefined): Generator<number> {
+function* getValidMoves(sqr: SquareRef, board: BoardState): Generator<number> {
+    const {population: pop, castle, toMove, enPassant: ep} = board;
     const sq = square(sqr).pos();
     const piece = pop[sq];
     if (piece === " ")
         return;
     const pt = pieceType(piece);
     const direction = directionOf(piece);
-    if (toMove !== undefined && direction !== toMove)
+    if (direction !== toMove)
         return; // it isn't this side's turn
     const isEnemy = (p: SquareState) => p != " " && directionOf(p) !== direction
     switch (pt) {
@@ -212,7 +213,7 @@ const appReduce = produce((state: AppState, action: AppEvent) => {
             }
             case "focusSquare": {
                 const {board} = state;
-                const valid = Array.from(getValidMoves(boardEvent.square, board.population, board.castle, board.toMove, board.enPassant));
+                const valid = Array.from(getValidMoves(boardEvent.square, board));
                 state.focus = {origin: boardEvent.square, valid};
                 return;
             }
