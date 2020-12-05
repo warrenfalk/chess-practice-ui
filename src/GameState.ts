@@ -98,6 +98,12 @@ export type BoardState = {
     castle: CastleState,
     enPassant: SquareRef | undefined,
     toMove: Color,
+    // number of half moves with respect to the 50 move draw rule
+    // resets to zero after a capture or a pawn move
+    halfMoveClock: number,
+    // number of the full moves in a game
+    // increments after black moves
+    fullMoveCount: number,
 }
 
 export function pieceType(piece: PieceCode) {

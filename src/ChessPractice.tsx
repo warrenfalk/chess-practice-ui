@@ -3,6 +3,7 @@ import { Board, BoardEvent, SquareFocus } from './Board';
 import { parseFen as parseFen } from './fen';
 import { SquareCoord, SquareRef, SquareState, square, pieceType, isWhite, CastleState, BoardState, PieceCode, directionOf, rankOf, Color } from './GameState';
 import produce from "immer";
+import { brotliDecompress } from 'zlib';
 
 type AppState = {
     board: BoardState,
@@ -77,6 +78,12 @@ const movePiece = produce((board: BoardState, move: {to: SquareRef, from: Square
         board.toMove = -1;
     else if (board.toMove === -1)
         board.toMove = 1;
+    if (population[to] !== " " || piece === "P" || piece === "p")
+        board.halfMoveClock = 0;
+    else
+        board.halfMoveClock++;
+    if (direction == -1)
+        board.fullMoveCount++;
 })
 
 function next(pos: number, h: number, v: number): number | undefined {

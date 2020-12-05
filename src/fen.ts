@@ -31,12 +31,22 @@ function parseEnPassantFen(enPassantFen: string): SquareRef | undefined {
     return square(enPassantFen);
 }
 
+function parseHalfMoveClockFen(halfMoveClockFen: string) {
+    return parseInt(halfMoveClockFen);
+}
+
+function parseFullMoveCountFen(fullMoveCountFen: string) {
+    return parseInt(fullMoveCountFen);
+}
+
 export function parseFen(fen: string): BoardState {
     const [boardFen, toMoveFen, castlesFen, enPassantFen, halfMoveClockFen, fullMoveCountFen] = fen.split(/ +/);
     const population = parseBoardFen(boardFen);
     const castle = parseCastleStateFen(castlesFen);
     const enPassant = parseEnPassantFen(enPassantFen);
     const toMove = parseToMoveFen(toMoveFen);
-    return {population, castle, toMove, enPassant}
+    const halfMoveClock = parseHalfMoveClockFen(halfMoveClockFen);
+    const fullMoveCount = parseFullMoveCountFen(fullMoveCountFen);
+    return {population, castle, toMove, enPassant, halfMoveClock, fullMoveCount}
 }
 
