@@ -1,4 +1,3 @@
-import { type } from "os";
 import React from "react";
 import { useState } from "react";
 import { isWhite, PieceCode, PieceCodes, pieceName, pieceType, square, SquareCoord, SquareInfo, SquareRef, SquareState } from "./GameState";
@@ -42,7 +41,7 @@ function hollowCirclePath(r: number, w: number): string {
 type SvgTransformElement = {
     getScreenCTM(): DOMMatrix | null;
 }
-function toSvgSpace(e: SVGElement, pt: {clientX: number, clientY: number}): Point {
+function toSvgSpace(e: SVGElement | (SVGElement & SvgTransformElement), pt: {clientX: number, clientY: number}): Point {
     const matrix = ("getScreenCTM" in e) ? (e as SvgTransformElement).getScreenCTM()?.inverse() : undefined;
     const point = e.ownerSVGElement!.createSVGPoint()!
     point.x = pt.clientX;

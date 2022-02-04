@@ -1,9 +1,8 @@
 import React, { useEffect, useReducer} from 'react';
 import { Board, BoardEvent, SquareFocus } from './Board';
 import { parseFen as parseFen } from './fen';
-import { SquareCoord, SquareRef, SquareState, square, pieceType, isWhite, CastleState, BoardState, PieceCode, directionOf, rankOf, Color } from './GameState';
+import { SquareRef, SquareState, square, pieceType, BoardState, directionOf, rankOf } from './GameState';
 import produce from "immer";
-import { brotliDecompress } from 'zlib';
 
 type AppState = {
     board: BoardState,

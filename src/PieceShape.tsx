@@ -1,6 +1,6 @@
 import assertNever from "assert-never"
 import React from 'react';
-import { PieceCode, PieceTypeCode } from "./GameState";
+import { PieceTypeCode } from "./GameState";
 
 export type PieceShape = {
     fill: string,

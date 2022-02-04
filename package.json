@@ -1,24 +1,22 @@
 {
   "name": "chess-practice-ui",
+  "version": "0.0.0",
   "scripts": {
-    "clean": "rimraf .cache dist/ distweb/",
-    "start": "ts-node --project fuse/tsconfig.json fuse/fuse.ts"
-  },
-  "devDependencies": {
-    "@yarnpkg/pnpify": "^2.3.3",
-    "rimraf": "^3.0.2",
-    "ts-node": "^9.0.0",
-    "typescript": "^4.1.2"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@types/node": "^14.14.10",
-    "@types/react": "^17.0.0",
-    "@types/react-dom": "^17.0.0",
     "assert-never": "^1.2.1",
-    "fuse-box": "next",
-    "immer": "^8.0.0",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "tslib": "^2.0.3"
+    "immer": "^9.0.12",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "^17.0.33",
+    "@types/react-dom": "^17.0.10",
+    "@vitejs/plugin-react": "^1.0.7",
+    "typescript": "^4.4.4",
+    "vite": "^2.7.2"
   }
 }
